@@ -1,0 +1,46 @@
+@startuml
+title GPU Data Center Allocation & Model Serving Workflow
+
+|AI Engineer / Data Scientist|
+start
+:Request Compute Resources (Full GPU or MIG Partition);
+
+|Orchestration Layer (K8s & GPU-Operator)|
+:Evaluate Cluster Capacity (H100/MI300X);
+if (Resources Available?) then (Yes)
+  :Allocate Compute Node via GPU-Operator;
+  :Configure 400Gbps InfiniBand/RoCE Fabric;
+else (No)
+  :Queue Request;
+  stop
+endif
+
+|Storage Layer (NVMe/SSD/S3)|
+fork
+  :Mount NVMe "Hot" Tier for Model Weights;
+fork again
+  :Connect to S3-Compatible API;
+  :Verify Dataset Versioning & Lineage;
+end fork
+:Enable AES-256 Encryption at Rest;
+
+|Model Registry & Inference Engine|
+:Fetch Model from Centralized Registry;
+:Select Quantization Level (INT8/FP8);
+:Deploy Model to REST/gRPC Endpoint;
+
+|Observability & Compliance|
+fork
+  :Stream Telemetry to Prometheus/Grafana;
+  :Monitor PUE and Thermal Levels;
+fork again
+  :Log API Access (365-day Retention);
+  :Verify Tenant Logical Isolation;
+end fork
+
+|AI Engineer / Data Scientist|
+:Perform Inference (<50ms Latency);
+:Review Resource Utilization Dashboard;
+
+stop
+@enduml
